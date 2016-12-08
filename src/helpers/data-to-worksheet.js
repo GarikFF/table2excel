@@ -1,4 +1,4 @@
-import encodeCell from './encode-cell';
+import {encodeCell} from './encode-cell.js';
 import cellToObject from './cell-to-object';
 
 /**
@@ -36,6 +36,7 @@ export default function dataToWorksheet(data, typeHandlers) {
 
     return sheet;
   }, {});
+
 
   // calculate last table index (bottom right)
   const lastRef = encodeCell({

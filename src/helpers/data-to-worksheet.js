@@ -12,10 +12,10 @@ import cellToObject from './cell-to-object';
  */
 export default function dataToWorksheet(data, typeHandlers) {
   const { cells, ranges } = data;
-
   let lastColumn = 0;
   // convert cells array to an object by iterating over all rows
   const worksheet = cells.reduce((sheet, row, rowIndex) => {
+
     // iterate over all row cells
     row.forEach((cell, columnIndex) => {
       lastColumn = Math.max(lastColumn, columnIndex);
@@ -37,6 +37,21 @@ export default function dataToWorksheet(data, typeHandlers) {
     return sheet;
   }, {});
 
+  worksheet['!cols'] = [];
+  const colsParams = cells.reduce((sheet, row, rowIndex) => {
+    // iterate over all row cells
+    row.forEach((cell, columnIndex) => {
+      // only save actual cells and convert them to XLSX-Cell objects
+      if (cell) {
+        worksheet['!cols'].push({
+          wpx: cell.offsetWidth
+        });
+
+      } else {
+        worksheet['!cols'].push(null);
+      }
+    });
+  }, {});
 
   // calculate last table index (bottom right)
   const lastRef = encodeCell({

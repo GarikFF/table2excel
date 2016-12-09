@@ -162,6 +162,11 @@ export default class Table2Excel {
           newWS['!ref'] = encodeRange(decodeRangeItem);
           break;
         case '!cols':
+          newWS['!cols'] = WS[key];
+
+          for (let i = 0; i < newPos.c; i++){
+            newWS['!cols'].unshift(null);
+          }
           break;
         default:
           decodeCellItem = decodeCell(key);

@@ -67,9 +67,10 @@ export default class Table2Excel {
    *
    * @param {NodeList} tables - The tables to export.
    * @param {string} fileName - The file name.
+   * @param {function} beforeDownloadCallback
    */
-  export(tables, fileName = this.defaultFileName) {
-    this.download(this.getWorkbook(tables), fileName);
+  export(tables, fileName = this.defaultFileName, beforeDownloadCallback = function(){}) {
+    this.download(this.getWorkbook(tables), fileName, beforeDownloadedCallback);
   }
 
   /**
@@ -282,8 +283,9 @@ export default class Table2Excel {
    *
    * @param {object} workbook - The XLSX-Workbook.
    * @param {string} fileName - The file name.
+   * @param {function} beforeDownloadedCallback
    */
-  download(workbook, fileName = this.defaultFileName) {
+  download(workbook, fileName = this.defaultFileName, beforeDownloadedCallback = function(){}) {
     function convert(data) {
       const buffer = new ArrayBuffer(data.length);
       const view = new Uint8Array(buffer);
@@ -299,6 +301,11 @@ export default class Table2Excel {
     });
 
     const blob = new Blob([convert(data)], { type: 'application/octet-stream' });
+
+    if (typeof beforeDownloadedCallback){
+      beforeDownloadedCallback();
+    }
+
     saveAs(blob, `${fileName}.xlsx`);
   }
 }

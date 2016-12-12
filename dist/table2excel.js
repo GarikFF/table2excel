@@ -57,6 +57,10 @@
 	  value: true
 	});
 
+	var _typeof2 = __webpack_require__(79);
+
+	var _typeof3 = _interopRequireDefault(_typeof2);
+
 	var _from = __webpack_require__(2);
 
 	var _from2 = _interopRequireDefault(_from);
@@ -161,6 +165,7 @@
 	   *
 	   * @param {NodeList} tables - The tables to export.
 	   * @param {string} fileName - The file name.
+	   * @param {function} beforeDownloadCallback
 	   */
 
 
@@ -168,8 +173,9 @@
 	    key: 'export',
 	    value: function _export(tables) {
 	      var fileName = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.defaultFileName;
+	      var beforeDownloadCallback = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : function () {};
 
-	      this.download(this.getWorkbook(tables), fileName);
+	      this.download(this.getWorkbook(tables), fileName, beforeDownloadedCallback);
 	    }
 
 	    /**
@@ -396,12 +402,14 @@
 	     *
 	     * @param {object} workbook - The XLSX-Workbook.
 	     * @param {string} fileName - The file name.
+	     * @param {function} beforeDownloadedCallback
 	     */
 
 	  }, {
 	    key: 'download',
 	    value: function download(workbook) {
 	      var fileName = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.defaultFileName;
+	      var beforeDownloadedCallback = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : function () {};
 
 	      function convert(data) {
 	        var buffer = new ArrayBuffer(data.length);
@@ -418,6 +426,11 @@
 	      });
 
 	      var blob = new Blob([convert(data)], { type: 'application/octet-stream' });
+
+	      if (typeof beforeDownloadedCallback === 'undefined' ? 'undefined' : (0, _typeof3.default)(beforeDownloadedCallback)) {
+	        beforeDownloadedCallback();
+	      }
+
 	      (0, _filesaver.saveAs)(blob, fileName + '.xlsx');
 	    }
 	  }]);

@@ -22,7 +22,7 @@ export default function tableToData(table) {
     // iterate over all cells in the row
     Array.from(row.querySelectorAll('td, th'))
       .filter(cell => cell.style.display !== 'none')
-      .forEach(cell => {
+      .forEach((cell, cellIndex) => {
         ranges.forEach(range => {
           if (  // we are in a rowspan (already saved in ranges)
             rowIndex >= range.s.r &&
@@ -61,7 +61,27 @@ export default function tableToData(table) {
           for (let i = 1; i < colspan; i++) cells[rowIndex].push(null);
         }
       });
+
   });
 
-  return { cells, ranges };
+
+    //дозаполняем ячейки для смержденых элементах на краях
+    cells.forEach((row, rowIndex) => {
+      "use strict";
+
+      ranges.forEach(range => {
+        if (  // we are in a rowspan (already saved in ranges)
+        rowIndex >= range.s.r &&
+        rowIndex <= range.e.r &&
+        cells[rowIndex].length <= range.s.c
+        ) {
+          // ... fill the cells with empty values
+          for (let i = range.s.c; i <= range.e.c; i++) {
+            cells[rowIndex].push(null);
+          }
+        }
+      });
+    });
+
+    return { cells, ranges };
 }

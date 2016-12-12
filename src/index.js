@@ -34,7 +34,7 @@ const defaultOptions = {
    * @param {string} name - worksheet name
    * @returns {object} worksheet
    */
-  beforeWorksheetAdded: function(worksheet, name){
+  beforeWorksheetAdded: function(worksheet, name, table){
       return worksheet;
   },
 };
@@ -89,12 +89,20 @@ export default class Table2Excel {
           dataName = table.getAttribute(`data-${this.tableNameDataAttribute}`);
         }
 
-        const name = dataName || (index + 1).toString();
+        let name = dataName || (index + 1).toString();
 
         let worksheet = this.getWorksheet(table);
 
+        let figcaption = [].filter.call(table.parentNode.children, function(element){
+          return element.tagName == 'FIGCAPTION';
+        });
+
+        if (figcaption.length == 1){
+          name = figcaption[0].innerText;
+        }
+
         if (typeof this.beforeWorksheetAdded === 'function'){
-            worksheet = this.beforeWorksheetAdded(worksheet, name);
+            worksheet = this.beforeWorksheetAdded(worksheet, name, table);
         }
 
         workbook.SheetNames.push(name);
@@ -133,7 +141,6 @@ export default class Table2Excel {
         '!merges': [],
         '!ref': '',
       };
-
     for (let key in WS) {
       switch(key){
         case '!merges':
@@ -180,6 +187,96 @@ export default class Table2Excel {
     return newWS;
   }
 
+  frameWorksheetTable(WS = {}){
+    let decodeCellItem = {},
+        newWS = WS,
+        setBorder = function(obj, borderType){
+          if (borderType && obj){
+            obj.s = obj.s || {};
+            obj.s.border = obj.s.border || {};
+
+            if (!obj.s.border[borderType]){
+              obj.s.border[borderType] = {
+                rgb: '000',
+                style: 'medium'
+              };
+            } else  if (!obj.s.border[borderType].style){
+              obj.s.border[borderType] = {
+                rgb: '000',
+                style: 'medium'
+              };
+            }
+          }
+          return obj;
+        };
+
+    let arCellPosition = [],
+        arRowPosition = [],
+        startCellPosition = {},
+        endCellPosition = {};
+
+
+    for (let key in newWS) {
+      switch(key){
+        case '!merges':
+          break;
+        case '!ref':
+          break;
+        case '!cols':
+          break;
+        default:
+          decodeCellItem = decodeCell(key);
+          arCellPosition.push(decodeCellItem.c);
+          arRowPosition.push(decodeCellItem.r);
+
+          break;
+      }
+    }
+
+    //Определяем диапозон заново,
+    //т.к. он может быть неверен из-за смещения таблицы
+    startCellPosition = {
+      c: Math.min.apply(null, arCellPosition),
+      r: Math.min.apply(null, arRowPosition),
+    };
+    endCellPosition = {
+      c: Math.max.apply(null, arCellPosition),
+      r: Math.max.apply(null, arRowPosition),
+    };
+
+    for (let key in newWS) {
+      switch(key){
+        case '!merges':
+          break;
+        case '!ref':
+          break;
+        case '!cols':
+          break;
+        default:
+          decodeCellItem = decodeCell(key);
+
+          if (decodeCellItem.r == startCellPosition.r){
+            setBorder(newWS[key], 'top');
+          }
+
+          if (decodeCellItem.r == endCellPosition.r) {
+            setBorder(newWS[key], 'bottom');
+          }
+
+          if (decodeCellItem.c == startCellPosition.c) {
+            setBorder(newWS[key], 'left');
+          }
+
+          if (decodeCellItem.c == endCellPosition.c) {
+            setBorder(newWS[key], 'right');
+          }
+
+          break;
+      }
+    }
+    return newWS;
+
+  }
   /**
    * Exports a XLSX-Workbook object to a xlsx-file.
    *
@@ -226,3 +323,35 @@ if (window) window.Table2Excel = Table2Excel;
 Table2Excel.extend = function extendCellTypes(typeHandler) {
   typeHandlers.unshift(typeHandler);
 };
+
+
+if (![].includes) {
+  Array.prototype.includes = function(searchElement/*, fromIndex*/) {
+    'use strict';
+    var O = Object(this);
+    var len = parseInt(O.length) || 0;
+    if (len === 0) {
+      return false;
+    }
+    var n = parseInt(arguments[1]) || 0;
+    var k;
+    if (n >= 0) {
+      k = n;
+    } else {
+      k = len + n;
+      if (k < 0) {
+        k = 0;
+      }
+    }
+    while (k < len) {
+      var currentElement = O[k];
+      if (searchElement === currentElement ||
+        (searchElement !== searchElement && currentElement !== currentElement)
+      ) {
+        return true;
+      }
+      k++;
+    }
+    return false;
+  };
+}

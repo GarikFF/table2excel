@@ -85,27 +85,27 @@
 
 	var _dataToWorksheet2 = _interopRequireDefault(_dataToWorksheet);
 
-	var _decodeCell = __webpack_require__(105);
+	var _decodeCell = __webpack_require__(77);
 
 	var _encodeCell = __webpack_require__(75);
 
-	var _list = __webpack_require__(77);
+	var _list = __webpack_require__(78);
 
 	var _list2 = _interopRequireDefault(_list);
 
-	var _number = __webpack_require__(100);
+	var _number = __webpack_require__(101);
 
 	var _number2 = _interopRequireDefault(_number);
 
-	var _date = __webpack_require__(101);
+	var _date = __webpack_require__(102);
 
 	var _date2 = _interopRequireDefault(_date);
 
-	var _input = __webpack_require__(102);
+	var _input = __webpack_require__(103);
 
 	var _input2 = _interopRequireDefault(_input);
 
-	var _boolean = __webpack_require__(103);
+	var _boolean = __webpack_require__(104);
 
 	var _boolean2 = _interopRequireDefault(_boolean);
 
@@ -130,7 +130,7 @@
 	   * @param {string} name - worksheet name
 	   * @returns {object} worksheet
 	   */
-	  beforeWorksheetAdded: function beforeWorksheetAdded(worksheet, name) {
+	  beforeWorksheetAdded: function beforeWorksheetAdded(worksheet, name, table) {
 	    return worksheet;
 	  }
 	};
@@ -185,13 +185,28 @@
 	      var _this = this;
 
 	      return (0, _from2.default)(tables.length ? tables : [tables]).reduce(function (workbook, table, index) {
-	        var dataName = table.getAttribute('data-' + _this.tableNameDataAttribute);
+	        var dataName = '';
+
+	        if (table.querySelector('caption')) {
+	          dataName = table.querySelector('caption').innerText;
+	        } else {
+	          dataName = table.getAttribute('data-' + _this.tableNameDataAttribute);
+	        }
+
 	        var name = dataName || (index + 1).toString();
 
 	        var worksheet = _this.getWorksheet(table);
 
+	        var figcaption = [].filter.call(table.parentNode.children, function (element) {
+	          return element.tagName == 'FIGCAPTION';
+	        });
+
+	        if (figcaption.length == 1) {
+	          name = figcaption[0].innerText;
+	        }
+
 	        if (typeof _this.beforeWorksheetAdded === 'function') {
-	          worksheet = _this.beforeWorksheetAdded(worksheet, name);
+	          worksheet = _this.beforeWorksheetAdded(worksheet, name, table);
 	        }
 
 	        workbook.SheetNames.push(name);
@@ -239,7 +254,6 @@
 	        '!merges': [],
 	        '!ref': ''
 	      };
-
 	      for (var key in WS) {
 	        switch (key) {
 	          case '!merges':
@@ -267,6 +281,13 @@
 
 	            newWS['!ref'] = (0, _encodeCell.encodeRange)(decodeRangeItem);
 	            break;
+	          case '!cols':
+	            newWS['!cols'] = WS[key];
+
+	            for (var i = 0; i < newPos.c; i++) {
+	              newWS['!cols'].unshift(null);
+	            }
+	            break;
 	          default:
 	            decodeCellItem = (0, _decodeCell.decodeCell)(key);
 	            decodeCellItem.c += newPos.c;
@@ -278,7 +299,98 @@
 	      }
 	      return newWS;
 	    }
+	  }, {
+	    key: 'frameWorksheetTable',
+	    value: function frameWorksheetTable() {
+	      var WS = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
+	      var decodeCellItem = {},
+	          newWS = WS,
+	          setBorder = function setBorder(obj, borderType) {
+	        if (borderType && obj) {
+	          obj.s = obj.s || {};
+	          obj.s.border = obj.s.border || {};
+
+	          if (!obj.s.border[borderType]) {
+	            obj.s.border[borderType] = {
+	              rgb: '000',
+	              style: 'medium'
+	            };
+	          } else if (!obj.s.border[borderType].style) {
+	            obj.s.border[borderType] = {
+	              rgb: '000',
+	              style: 'medium'
+	            };
+	          }
+	        }
+	        return obj;
+	      };
+
+	      var arCellPosition = [],
+	          arRowPosition = [],
+	          startCellPosition = {},
+	          endCellPosition = {};
+
+	      for (var key in newWS) {
+	        switch (key) {
+	          case '!merges':
+	            break;
+	          case '!ref':
+	            break;
+	          case '!cols':
+	            break;
+	          default:
+	            decodeCellItem = (0, _decodeCell.decodeCell)(key);
+	            arCellPosition.push(decodeCellItem.c);
+	            arRowPosition.push(decodeCellItem.r);
+
+	            break;
+	        }
+	      }
+
+	      //Определяем диапозон заново,
+	      //т.к. он может быть неверен из-за смещения таблицы
+	      startCellPosition = {
+	        c: Math.min.apply(null, arCellPosition),
+	        r: Math.min.apply(null, arRowPosition)
+	      };
+	      endCellPosition = {
+	        c: Math.max.apply(null, arCellPosition),
+	        r: Math.max.apply(null, arRowPosition)
+	      };
+
+	      for (var _key in newWS) {
+	        switch (_key) {
+	          case '!merges':
+	            break;
+	          case '!ref':
+	            break;
+	          case '!cols':
+	            break;
+	          default:
+	            decodeCellItem = (0, _decodeCell.decodeCell)(_key);
+
+	            if (decodeCellItem.r == startCellPosition.r) {
+	              setBorder(newWS[_key], 'top');
+	            }
+
+	            if (decodeCellItem.r == endCellPosition.r) {
+	              setBorder(newWS[_key], 'bottom');
+	            }
+
+	            if (decodeCellItem.c == startCellPosition.c) {
+	              setBorder(newWS[_key], 'left');
+	            }
+
+	            if (decodeCellItem.c == endCellPosition.c) {
+	              setBorder(newWS[_key], 'right');
+	            }
+
+	            break;
+	        }
+	      }
+	      return newWS;
+	    }
 	    /**
 	     * Exports a XLSX-Workbook object to a xlsx-file.
 	     *
@@ -335,6 +447,36 @@
 	Table2Excel.extend = function extendCellTypes(typeHandler) {
 	  typeHandlers.unshift(typeHandler);
 	};
+
+	if (![].includes) {
+	  Array.prototype.includes = function (searchElement /*, fromIndex*/) {
+	    'use strict';
+
+	    var O = Object(this);
+	    var len = parseInt(O.length) || 0;
+	    if (len === 0) {
+	      return false;
+	    }
+	    var n = parseInt(arguments[1]) || 0;
+	    var k;
+	    if (n >= 0) {
+	      k = n;
+	    } else {
+	      k = len + n;
+	      if (k < 0) {
+	        k = 0;
+	      }
+	    }
+	    while (k < len) {
+	      var currentElement = O[k];
+	      if (searchElement === currentElement || searchElement !== searchElement && currentElement !== currentElement) {
+	        return true;
+	      }
+	      k++;
+	    }
+	    return false;
+	  };
+	}
 
 /***/ },
 /* 2 */
@@ -1725,7 +1867,7 @@
 	    // iterate over all cells in the row
 	    (0, _from2.default)(row.querySelectorAll('td, th')).filter(function (cell) {
 	      return cell.style.display !== 'none';
-	    }).forEach(function (cell) {
+	    }).forEach(function (cell, cellIndex) {
 	      ranges.forEach(function (range) {
 	        if ( // we are in a rowspan (already saved in ranges)
 	        rowIndex >= range.s.r && rowIndex <= range.e.r && cells[rowIndex].length >= range.s.c && cells[rowIndex].length <= range.e.c) {
@@ -1758,6 +1900,21 @@
 	      // if we are in a following colspan ...
 	      if (colspan > 1) {
 	        for (var i = 1; i < colspan; i++) {
+	          cells[rowIndex].push(null);
+	        }
+	      }
+	    });
+	  });
+
+	  //дозаполняем ячейки для смержденых элементах на краях
+	  cells.forEach(function (row, rowIndex) {
+	    "use strict";
+
+	    ranges.forEach(function (range) {
+	      if ( // we are in a rowspan (already saved in ranges)
+	      rowIndex >= range.s.r && rowIndex <= range.e.r && cells[rowIndex].length <= range.s.c) {
+	        // ... fill the cells with empty values
+	        for (var i = range.s.c; i <= range.e.c; i++) {
 	          cells[rowIndex].push(null);
 	        }
 	      }
@@ -1799,10 +1956,11 @@
 	  var cells = data.cells,
 	      ranges = data.ranges;
 
-
 	  var lastColumn = 0;
+
 	  // convert cells array to an object by iterating over all rows
 	  var worksheet = cells.reduce(function (sheet, row, rowIndex) {
+
 	    // iterate over all row cells
 	    row.forEach(function (cell, columnIndex) {
 	      lastColumn = Math.max(lastColumn, columnIndex);
@@ -1823,6 +1981,73 @@
 
 	    return sheet;
 	  }, {});
+
+	  /**
+	   * Дублируем стили границ объекта на другой объект
+	   * @param target - объект, к которому нужно скопировать стили
+	   * @param donor - объект, от которого копируем стили
+	   * @param position - позиция границы
+	   */
+	  function setStyle(target, donor, position) {
+	    "use strict";
+
+	    if (donor.s.border && position && donor.s.border[position]) {
+	      target.s = target.s || {};
+	      target.s.border = target.s.border || {};
+	      target.s.border[position] = donor.s.border[position];
+	    }
+	  }
+
+	  ranges.forEach(function (range) {
+	    var ref = (0, _encodeCell.encodeCell)({
+	      c: range.s.c,
+	      r: range.s.r
+	    });
+
+	    var startCellObject = worksheet[ref];
+
+	    if (startCellObject.s) {
+
+	      for (var sr = range.s.r; sr <= range.e.r; sr++) {
+	        for (var sc = range.s.c; sc <= range.e.c; sc++) {
+	          var targetCellRef = (0, _encodeCell.encodeCell)({
+	            c: sc,
+	            r: sr
+	          });
+	          var targetCellObject = worksheet[targetCellRef];
+
+	          if (sr == range.s.r) {
+	            setStyle(targetCellObject, startCellObject, 'top');
+	          }
+
+	          if (sr == range.e.r) {
+	            setStyle(targetCellObject, startCellObject, 'bottom');
+	          }
+
+	          if (sc == range.s.c) {
+	            setStyle(targetCellObject, startCellObject, 'left');
+	          }
+
+	          if (sc == range.e.c) {
+	            setStyle(targetCellObject, startCellObject, 'right');
+	          }
+	        }
+	      }
+	    }
+	  });
+
+	  worksheet['!cols'] = [];
+
+	  cells[0].forEach(function (cell, columnIndex) {
+	    // only save actual cells and convert them to XLSX-Cell objects
+	    if (cell) {
+	      worksheet['!cols'].push({
+	        wpx: cell.offsetWidth
+	      });
+	    } else {
+	      worksheet['!cols'].push(null);
+	    }
+	  });
 
 	  // calculate last table index (bottom right)
 	  var lastRef = (0, _encodeCell.encodeCell)({
@@ -1914,6 +2139,55 @@
 
 /***/ },
 /* 77 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.decodeCell = decodeCell;
+	exports.decodeRange = decodeRange;
+	function decodeCol(col) {
+	    var parseCol = col.match(/[a-zA-Z]+/)[0],
+	        pow = 1,
+	        res = 0;
+
+	    for (var i = 0, len = parseCol.length; i < len; i++) {
+	        res += (parseCol[i].charCodeAt(0) - 64) * pow;
+	        pow *= 25;
+	    }
+	    return res - 1;
+	}
+
+	function decodeRow(row) {
+	    return row.match(/[0-9]+/)[0];
+	}
+
+	function decodeCell(cell) {
+	    return {
+	        'c': decodeCol(cell),
+	        'r': decodeRow(cell) - 1
+	    };
+	}
+
+	function decodeRange(range) {
+	    var arRange = range.split(new RegExp('\:'));
+
+	    return {
+	        s: {
+	            'c': decodeCol(arRange[0]),
+	            'r': decodeRow(arRange[0]) - 1
+	        },
+	        e: {
+	            'c': decodeCol(arRange[1]),
+	            'r': decodeRow(arRange[1]) - 1
+	        }
+	    };
+	}
+
+/***/ },
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1922,7 +2196,7 @@
 	  value: true
 	});
 
-	var _typeof2 = __webpack_require__(78);
+	var _typeof2 = __webpack_require__(79);
 
 	var _typeof3 = _interopRequireDefault(_typeof2);
 
@@ -1965,18 +2239,18 @@
 	};
 
 /***/ },
-/* 78 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	exports.__esModule = true;
 
-	var _iterator = __webpack_require__(79);
+	var _iterator = __webpack_require__(80);
 
 	var _iterator2 = _interopRequireDefault(_iterator);
 
-	var _symbol = __webpack_require__(86);
+	var _symbol = __webpack_require__(87);
 
 	var _symbol2 = _interopRequireDefault(_symbol);
 
@@ -1991,24 +2265,24 @@
 	};
 
 /***/ },
-/* 79 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = { "default": __webpack_require__(80), __esModule: true };
-
-/***/ },
 /* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(4);
-	__webpack_require__(81);
-	module.exports = __webpack_require__(85).f('iterator');
+	module.exports = { "default": __webpack_require__(81), __esModule: true };
 
 /***/ },
 /* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(4);
 	__webpack_require__(82);
+	module.exports = __webpack_require__(86).f('iterator');
+
+/***/ },
+/* 82 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(83);
 	var global        = __webpack_require__(11)
 	  , hide          = __webpack_require__(15)
 	  , Iterators     = __webpack_require__(27)
@@ -2023,12 +2297,12 @@
 	}
 
 /***/ },
-/* 82 */
+/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	var addToUnscopables = __webpack_require__(83)
-	  , step             = __webpack_require__(84)
+	var addToUnscopables = __webpack_require__(84)
+	  , step             = __webpack_require__(85)
 	  , Iterators        = __webpack_require__(27)
 	  , toIObject        = __webpack_require__(33);
 
@@ -2062,13 +2336,13 @@
 	addToUnscopables('entries');
 
 /***/ },
-/* 83 */
+/* 84 */
 /***/ function(module, exports) {
 
 	module.exports = function(){ /* empty */ };
 
 /***/ },
-/* 84 */
+/* 85 */
 /***/ function(module, exports) {
 
 	module.exports = function(done, value){
@@ -2076,29 +2350,29 @@
 	};
 
 /***/ },
-/* 85 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports.f = __webpack_require__(45);
 
 /***/ },
-/* 86 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = { "default": __webpack_require__(87), __esModule: true };
-
-/***/ },
 /* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(88);
-	__webpack_require__(97);
-	__webpack_require__(98);
-	__webpack_require__(99);
-	module.exports = __webpack_require__(12).Symbol;
+	module.exports = { "default": __webpack_require__(88), __esModule: true };
 
 /***/ },
 /* 88 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(89);
+	__webpack_require__(98);
+	__webpack_require__(99);
+	__webpack_require__(100);
+	module.exports = __webpack_require__(12).Symbol;
+
+/***/ },
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2108,24 +2382,24 @@
 	  , DESCRIPTORS    = __webpack_require__(20)
 	  , $export        = __webpack_require__(10)
 	  , redefine       = __webpack_require__(25)
-	  , META           = __webpack_require__(89).KEY
+	  , META           = __webpack_require__(90).KEY
 	  , $fails         = __webpack_require__(21)
 	  , shared         = __webpack_require__(40)
 	  , setToStringTag = __webpack_require__(44)
 	  , uid            = __webpack_require__(41)
 	  , wks            = __webpack_require__(45)
-	  , wksExt         = __webpack_require__(85)
-	  , wksDefine      = __webpack_require__(90)
-	  , keyOf          = __webpack_require__(91)
-	  , enumKeys       = __webpack_require__(92)
-	  , isArray        = __webpack_require__(93)
+	  , wksExt         = __webpack_require__(86)
+	  , wksDefine      = __webpack_require__(91)
+	  , keyOf          = __webpack_require__(92)
+	  , enumKeys       = __webpack_require__(93)
+	  , isArray        = __webpack_require__(94)
 	  , anObject       = __webpack_require__(17)
 	  , toIObject      = __webpack_require__(33)
 	  , toPrimitive    = __webpack_require__(23)
 	  , createDesc     = __webpack_require__(24)
 	  , _create        = __webpack_require__(29)
-	  , gOPNExt        = __webpack_require__(94)
-	  , $GOPD          = __webpack_require__(96)
+	  , gOPNExt        = __webpack_require__(95)
+	  , $GOPD          = __webpack_require__(97)
 	  , $DP            = __webpack_require__(16)
 	  , $keys          = __webpack_require__(31)
 	  , gOPD           = $GOPD.f
@@ -2250,7 +2524,7 @@
 
 	  $GOPD.f = $getOwnPropertyDescriptor;
 	  $DP.f   = $defineProperty;
-	  __webpack_require__(95).f = gOPNExt.f = $getOwnPropertyNames;
+	  __webpack_require__(96).f = gOPNExt.f = $getOwnPropertyNames;
 	  __webpack_require__(61).f  = $propertyIsEnumerable;
 	  __webpack_require__(60).f = $getOwnPropertySymbols;
 
@@ -2338,7 +2612,7 @@
 	setToStringTag(global.JSON, 'JSON', true);
 
 /***/ },
-/* 89 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var META     = __webpack_require__(41)('meta')
@@ -2396,13 +2670,13 @@
 	};
 
 /***/ },
-/* 90 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var global         = __webpack_require__(11)
 	  , core           = __webpack_require__(12)
 	  , LIBRARY        = __webpack_require__(9)
-	  , wksExt         = __webpack_require__(85)
+	  , wksExt         = __webpack_require__(86)
 	  , defineProperty = __webpack_require__(16).f;
 	module.exports = function(name){
 	  var $Symbol = core.Symbol || (core.Symbol = LIBRARY ? {} : global.Symbol || {});
@@ -2410,7 +2684,7 @@
 	};
 
 /***/ },
-/* 91 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var getKeys   = __webpack_require__(31)
@@ -2425,7 +2699,7 @@
 	};
 
 /***/ },
-/* 92 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// all enumerable object keys, includes symbols
@@ -2445,7 +2719,7 @@
 	};
 
 /***/ },
-/* 93 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 7.2.2 IsArray(argument)
@@ -2455,12 +2729,12 @@
 	};
 
 /***/ },
-/* 94 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
 	var toIObject = __webpack_require__(33)
-	  , gOPN      = __webpack_require__(95).f
+	  , gOPN      = __webpack_require__(96).f
 	  , toString  = {}.toString;
 
 	var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNames
@@ -2480,7 +2754,7 @@
 
 
 /***/ },
-/* 95 */
+/* 96 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
@@ -2492,7 +2766,7 @@
 	};
 
 /***/ },
-/* 96 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var pIE            = __webpack_require__(61)
@@ -2513,25 +2787,25 @@
 	};
 
 /***/ },
-/* 97 */
+/* 98 */
 /***/ function(module, exports) {
 
 	
 
 /***/ },
-/* 98 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(90)('asyncIterator');
-
-/***/ },
 /* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(90)('observable');
+	__webpack_require__(91)('asyncIterator');
 
 /***/ },
 /* 100 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(91)('observable');
+
+/***/ },
+/* 101 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2556,7 +2830,7 @@
 	};
 
 /***/ },
-/* 101 */
+/* 102 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2592,7 +2866,7 @@
 	};
 
 /***/ },
-/* 102 */
+/* 103 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2620,7 +2894,7 @@
 	};
 
 /***/ },
-/* 103 */
+/* 104 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2649,56 +2923,6 @@
 
 	  return null;
 	};
-
-/***/ },
-/* 104 */,
-/* 105 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.decodeCell = decodeCell;
-	exports.decodeRange = decodeRange;
-	function decodeCol(col) {
-	    var parseCol = col.match(/[a-zA-Z]+/)[0],
-	        pow = 1,
-	        res = 0;
-
-	    for (var i = 0, len = parseCol.length; i < len; i++) {
-	        res += (parseCol[i].charCodeAt(0) - 64) * pow;
-	        pow *= 25;
-	    }
-	    return res - 1;
-	}
-
-	function decodeRow(row) {
-	    return row.match(/[0-9]+/)[0];
-	}
-
-	function decodeCell(cell) {
-	    return {
-	        'c': decodeCol(cell),
-	        'r': decodeRow(cell) - 1
-	    };
-	}
-
-	function decodeRange(range) {
-	    var arRange = range.split(new RegExp('\:'));
-
-	    return {
-	        s: {
-	            'c': decodeCol(arRange[0]),
-	            'r': decodeRow(arRange[0]) - 1
-	        },
-	        e: {
-	            'c': decodeCol(arRange[1]),
-	            'r': decodeRow(arRange[1]) - 1
-	        }
-	    };
-	}
 
 /***/ }
 /******/ ]);

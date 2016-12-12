@@ -165,7 +165,7 @@
 	   *
 	   * @param {NodeList} tables - The tables to export.
 	   * @param {string} fileName - The file name.
-	   * @param {function} beforeDownloadCallback
+	   * @param {function} beforeDownloadedCallback
 	   */
 
 
@@ -173,7 +173,7 @@
 	    key: 'export',
 	    value: function _export(tables) {
 	      var fileName = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.defaultFileName;
-	      var beforeDownloadCallback = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : function () {};
+	      var beforeDownloadedCallback = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : function () {};
 
 	      this.download(this.getWorkbook(tables), fileName, beforeDownloadedCallback);
 	    }

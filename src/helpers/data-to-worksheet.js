@@ -95,18 +95,34 @@ export default function dataToWorksheet(data, typeHandlers) {
   });
 
   worksheet['!cols'] = [];
+  let cols = {};
 
-  cells[0].forEach((cell, columnIndex) => {
-    // only save actual cells and convert them to XLSX-Cell objects
-    if (cell) {
-      worksheet['!cols'].push({
-        wpx: cell.offsetWidth
-      });
+  for(let i = 0; i <= cells[0].length; i++){
+    cols['cell' + i] = false;
+  }
 
+  cells.reduce((sheet, row, rowIndex) => {
+    // iterate over all row cells
+    row.forEach((cell, columnIndex) => {
+
+      if (cell){
+        const colspan = parseInt(cell.colSpan, 10) || 1;
+        if ((colspan == 1) && (!cols['cell' + columnIndex])){
+          cols['cell' + columnIndex] = {
+            wpx: cell.offsetWidth
+          };
+        }
+      }
+    });
+  }, {});
+
+  for(let key in cols){
+    if (cols[key]){
+      worksheet['!cols'].push(cols[key]);
     } else {
       worksheet['!cols'].push(null);
     }
-  });
+  }
 
   // calculate last table index (bottom right)
   const lastRef = encodeCell({

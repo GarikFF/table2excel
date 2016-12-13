@@ -67,9 +67,9 @@ export default class Table2Excel {
    *
    * @param {NodeList} tables - The tables to export.
    * @param {string} fileName - The file name.
-   * @param {function} beforeDownloadCallback
+   * @param {function} beforeDownloadedCallback
    */
-  export(tables, fileName = this.defaultFileName, beforeDownloadCallback = function(){}) {
+  export(tables, fileName = this.defaultFileName, beforeDownloadedCallback = function(){}) {
     this.download(this.getWorkbook(tables), fileName, beforeDownloadedCallback);
   }
 

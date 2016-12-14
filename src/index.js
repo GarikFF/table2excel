@@ -199,12 +199,12 @@ export default class Table2Excel {
             if (!obj.s.border[borderType]){
               obj.s.border[borderType] = {
                 rgb: '000',
-                style: 'medium'
+                style: 'thin'
               };
             } else  if (!obj.s.border[borderType].style){
               obj.s.border[borderType] = {
                 rgb: '000',
-                style: 'medium'
+                style: 'thin'
               };
             }
           }

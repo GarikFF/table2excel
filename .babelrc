@@ -4,6 +4,8 @@
     "transform-runtime",
     "transform-strict-mode",
     "transform-object-assign",
-    "transform-array-from"
+    "transform-array-from",
+    "transform-es3-member-expression-literals",
+    "transform-es3-property-literals"
   ]
 }

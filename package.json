@@ -44,6 +44,8 @@
     "babel-core": "^6.10.4",
     "babel-loader": "^6.2.4",
     "babel-plugin-transform-array-from": "^1.0.0",
+    "babel-plugin-transform-es3-member-expression-literals": "^6.8.0",
+    "babel-plugin-transform-es3-property-literals": "^6.8.0",
     "babel-plugin-transform-object-assign": "^6.8.0",
     "babel-plugin-transform-runtime": "^6.9.0",
     "babel-plugin-transform-strict-mode": "^6.11.3",

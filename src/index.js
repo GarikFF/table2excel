@@ -60,6 +60,11 @@ export default class Table2Excel {
    */
   constructor(options = {}) {
     Object.assign(this, defaultOptions, options);
+    
+    this.decodeCell = decodeCell;
+    this.decodeRange = decodeRange;
+    this.encodeCell = encodeCell;
+    this.encodeRange = encodeRange;
   }
 
   /**
@@ -104,6 +109,10 @@ export default class Table2Excel {
 
         if (typeof this.beforeWorksheetAdded === 'function'){
             worksheet = this.beforeWorksheetAdded(worksheet, name, table);
+        }
+
+        if (worksheet.customSheetName){
+          name = worksheet.customSheetName;
         }
 
         workbook.SheetNames.push(name);
@@ -159,7 +168,7 @@ export default class Table2Excel {
           }
           break;
         case '!ref':
-          decodeRangeItem = decodeRange(WS[key]);
+          decodeRangeItem = this.decodeRange(WS[key]);
 
           /**
            * We don't move start range position (A1)
@@ -167,7 +176,7 @@ export default class Table2Excel {
           decodeRangeItem.e.c += newPos.c;
           decodeRangeItem.e.r += newPos.r;
 
-          newWS['!ref'] = encodeRange(decodeRangeItem);
+          newWS['!ref'] = this.encodeRange(decodeRangeItem);
           break;
         case '!cols':
           newWS['!cols'] = WS[key];
@@ -177,11 +186,11 @@ export default class Table2Excel {
           }
           break;
         default:
-          decodeCellItem = decodeCell(key);
+          decodeCellItem = this.decodeCell(key);
           decodeCellItem.c += newPos.c;
           decodeCellItem.r += newPos.r;
 
-          newWS[encodeCell(decodeCellItem)] = WS[key];
+          newWS[this.encodeCell(decodeCellItem)] = WS[key];
           break;
       }
     }
@@ -226,7 +235,7 @@ export default class Table2Excel {
         case '!cols':
           break;
         default:
-          decodeCellItem = decodeCell(key);
+          decodeCellItem = this.decodeCell(key);
           arCellPosition.push(decodeCellItem.c);
           arRowPosition.push(decodeCellItem.r);
 
@@ -254,7 +263,7 @@ export default class Table2Excel {
         case '!cols':
           break;
         default:
-          decodeCellItem = decodeCell(key);
+          decodeCellItem = this.decodeCell(key);
 
           if (decodeCellItem.r == startCellPosition.r){
             setBorder(newWS[key], 'top');

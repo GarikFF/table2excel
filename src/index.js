@@ -65,6 +65,7 @@ export default class Table2Excel {
     this.decodeRange = decodeRange;
     this.encodeCell = encodeCell;
     this.encodeRange = encodeRange;
+    this.saveAs = saveAs;
   }
 
   /**
@@ -76,6 +77,18 @@ export default class Table2Excel {
    */
   export(tables, fileName = this.defaultFileName, beforeDownloadedCallback = function(){}) {
     this.download(this.getWorkbook(tables), fileName, beforeDownloadedCallback);
+  }
+
+
+  exportLikeRawData(tables) {
+    return this.getRawConvertData(this.getWorkbook(tables));
+  }
+
+  getRawConvertData(workbook) {
+    return window.XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'base64',
+    });
   }
 
   /**
@@ -315,7 +328,7 @@ export default class Table2Excel {
       beforeDownloadedCallback();
     }
 
-    saveAs(blob, `${fileName}.xlsx`);
+    this.saveAs(blob, `${fileName}.xlsx`);
   }
 }
 
@@ -340,34 +353,34 @@ Table2Excel.extend = function extendCellTypes(typeHandler) {
   typeHandlers.unshift(typeHandler);
 };
 
-
-if (![].includes) {
-  Array.prototype.includes = function(searchElement/*, fromIndex*/) {
-    'use strict';
-    var O = Object(this);
-    var len = parseInt(O.length) || 0;
-    if (len === 0) {
-      return false;
-    }
-    var n = parseInt(arguments[1]) || 0;
-    var k;
-    if (n >= 0) {
-      k = n;
-    } else {
-      k = len + n;
-      if (k < 0) {
-        k = 0;
-      }
-    }
-    while (k < len) {
-      var currentElement = O[k];
-      if (searchElement === currentElement ||
-        (searchElement !== searchElement && currentElement !== currentElement)
-      ) {
-        return true;
-      }
-      k++;
-    }
-    return false;
-  };
-}
+//
+// if (![].includes) {
+//   Array.prototype.includes = function(searchElement/*, fromIndex*/) {
+//     'use strict';
+//     var O = Object(this);
+//     var len = parseInt(O.length) || 0;
+//     if (len === 0) {
+//       return false;
+//     }
+//     var n = parseInt(arguments[1]) || 0;
+//     var k;
+//     if (n >= 0) {
+//       k = n;
+//     } else {
+//       k = len + n;
+//       if (k < 0) {
+//         k = 0;
+//       }
+//     }
+//     while (k < len) {
+//       var currentElement = O[k];
+//       if (searchElement === currentElement ||
+//         (searchElement !== searchElement && currentElement !== currentElement)
+//       ) {
+//         return true;
+//       }
+//       k++;
+//     }
+//     return false;
+//   };
+// }

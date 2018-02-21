@@ -169,16 +169,18 @@ export default class Table2Excel {
         case '!merges':
           if (WS[key].length) {
 	          for (let mergeKey in WS[key]) {
-		          newWS['!merges'].push({
-			          e: {
-				          c: WS[key][mergeKey].e.c + newPos.c,
-				          r: WS[key][mergeKey].e.r + newPos.r,
-			          },
-			          s: {
-				          c: WS[key][mergeKey].s.c + newPos.c,
-				          r: WS[key][mergeKey].s.r + newPos.r,
-			          },
-		          });
+	            if (typeof WS[key][mergeKey] == 'object') {
+		            newWS['!merges'].push({
+			            e: {
+				            c: WS[key][mergeKey].e.c + newPos.c,
+				            r: WS[key][mergeKey].e.r + newPos.r,
+			            },
+			            s: {
+				            c: WS[key][mergeKey].s.c + newPos.c,
+				            r: WS[key][mergeKey].s.r + newPos.r,
+			            },
+		            });
+                }
 	          }
           }
           break;

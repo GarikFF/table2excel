@@ -67,7 +67,7 @@
     "webpack": "^1.13.1"
   },
   "dependencies": {
-    "filesaver.js": "^0.2.0",
+    "file-saver": "^1.3.8",
     "xlsx-style": "^0.8.13"
   }
 }

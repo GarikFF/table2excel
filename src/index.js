@@ -1,6 +1,6 @@
 import 'xlsx-style/dist/xlsx.core.min';
 
-import { saveAs } from 'filesaver.js';
+import { saveAs } from 'file-saver';
 
 import tableToData from './helpers/table-to-data';
 import dataToWorksheet from './helpers/data-to-worksheet';
